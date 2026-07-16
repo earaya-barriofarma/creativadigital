@@ -1,0 +1,52 @@
+# ──────────────────────────────────────────────
+# Creativa Digital — Control-Plane .gitignore
+# ──────────────────────────────────────────────
+
+# === Bench runtime state — disposable, never versioned ===
+benches/
+
+# === Secrets and environment files ===
+# Keep .env.example as the sole tracked exception.
+.env
+.env.*
+!.env.example
+
+# === Python / Frappe virtual environments ===
+venv/
+.venv/
+env/
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+*.so
+
+# === Node / Frontend ===
+node_modules/
+frontend/dist/
+
+# === OS artifacts ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.iml
+*.sublime-*
+
+# === Logs ===
+*.log
+logs/
+
+# === Runtime / Temp ===
+*.pid
+*.seed
+*.pid.lock
+tmp/
+temp/
