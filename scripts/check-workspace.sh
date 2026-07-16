@@ -94,7 +94,7 @@ else
                 fail "${REL_PATH}: broken link '${LINK}'"
                 LINK_ERRORS=$((LINK_ERRORS + 1))
             fi
-        done < <(grep -oP '\[([^\]]+)\]\(([^)]+)\)' "$FILE" | sed -n 's/.*(\([^)]*\)).*/\1/p' 2>/dev/null || true)
+        done < <(grep -oE '\[([^\]]+)\]\(([^)]+)\)' "$FILE" | sed -n 's/.*(\([^)]*\)).*/\1/p' 2>/dev/null || true)
     done
 
     if [[ $LINK_ERRORS -eq 0 ]]; then
@@ -110,13 +110,13 @@ for FILE in "${MD_FILES[@]}"; do
     REL_PATH="${FILE#${ROOT_DIR}/}"
 
     # Check: headings have a space after #
-    if grep -qnP '^#{2,}([^ #]|$)' "$FILE" 2>/dev/null; then
+    if grep -qnE '^#{2,}([^ #]|$)' "$FILE" 2>/dev/null; then
         fail "${REL_PATH}: headings must have a space after '#' markers"
         MD_ERRORS=$((MD_ERRORS + 1))
     fi
 
     # Check: no trailing whitespace
-    if grep -qnP '[[:space:]]+$' "$FILE" 2>/dev/null; then
+    if grep -qnE '[[:space:]]+$' "$FILE" 2>/dev/null; then
         warn "${REL_PATH}: trailing whitespace found (auto-fix with your editor)"
     fi
 
@@ -126,10 +126,6 @@ for FILE in "${MD_FILES[@]}"; do
         MD_ERRORS=$((MD_ERRORS + 1))
     fi
 done
-
-if [[ $MD_ERRORS -eq 0 ]]; then
-    pass "Markdown formatting checks passed."
-fi
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
