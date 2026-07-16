@@ -1,0 +1,61 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Creativa Digital — Local Development Infrastructure
+#
+# Provides the backing services (MariaDB, Redis) needed by any Frappe Bench.
+# Run this BEFORE bootstrapping a Bench, and keep it running while you develop.
+#
+# Usage:
+#   docker compose up -d          # start infrastructure
+#   docker compose down           # stop infrastructure (preserves volumes)
+#   docker compose down -v        # stop and destroy all data
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  mariadb:
+    image: docker.io/mariadb:11.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      MARIADB_AUTO_UPGRADE: 1
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-cache:
+    image: docker.io/redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-cache-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-queue:
+    image: docker.io/redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-queue-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mariadb-data:
+  redis-cache-data:
+  redis-queue-data:

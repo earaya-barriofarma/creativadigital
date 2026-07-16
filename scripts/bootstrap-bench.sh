@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 # bootstrap-bench.sh — Guarded helper to bootstrap a disposable local Bench
 #
 # Usage:
@@ -7,14 +7,14 @@
 #
 # Validates the target path is under benches/<client>-bench/, checks that
 # `bench` is available, creates the directory, and delegates to `bench init`.
-# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-# ── Constants ────────────────────────────────────────────────────────────────
+# ── Constants ───────────────────────────────────────────
 REQUIRED_COMMANDS=(bench)
 BENCHES_ROOT="benches"
 
-# ── Functions ────────────────────────────────────────────────────────────────
+# ── Functions ───────────────────────────────────────────
 
 usage() {
     cat <<EOF
@@ -43,7 +43,7 @@ info() {
     echo "[INFO] $*"
 }
 
-# ── Guard: argument validation ───────────────────────────────────────────────
+# ── Guard: argument validation ─────────────────────────────────
 if [[ $# -ne 1 ]]; then
     usage
 fi
@@ -56,7 +56,7 @@ if [[ ! "$CLIENT" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]]; then
     die "Invalid client name '${CLIENT}'. Use alphanumeric characters and hyphens only."
 fi
 
-# ── Guard: target path safety ────────────────────────────────────────────────
+# ── Guard: target path safety ─────────────────────────────────
 RESOLVED_DIR="$(cd "$(dirname "$0")/.." && pwd)/${BENCH_DIR}"
 EXPECTED_PREFIX="$(cd "$(dirname "$0")/.." && pwd)/${BENCHES_ROOT}/"
 
@@ -68,21 +68,35 @@ if [[ -d "$BENCH_DIR" ]]; then
     die "Target '${BENCH_DIR}' already exists. Use scripts/remove-bench.sh to remove it first."
 fi
 
-# ── Guard: prerequisites ─────────────────────────────────────────────────────
+# ── Guard: prerequisites ────────────────────────────────
 for cmd in "${REQUIRED_COMMANDS[@]}"; do
     if ! command -v "$cmd" &>/dev/null; then
         die "Required command '${cmd}' not found on PATH. Install Frappe Bench first."
     fi
 done
 
-# ── Bootstrap ────────────────────────────────────────────────────────────────
+# ── Guard: Docker infrastructure ────────────────────────
+if ! command -v docker &>/dev/null; then
+    die "Docker not found. Install Docker Desktop and run 'docker compose up -d' from the repo root first."
+fi
+
+if ! docker compose ps --services --filter "status=running" 2>/dev/null | grep -q "mariadb"; then
+    cat <<EOF
+[WARN] MariaDB container is not running.
+       Start infrastructure from the repo root:
+         docker compose up -d
+EOF
+    # Don't die — the user might have a non-Docker database server running
+fi
+
+# ── Bootstrap ─────────────────────────────────────────
 info "Creating Bench directory: ${BENCH_DIR}/"
 mkdir -p "$BENCH_DIR"
 
 info "Initializing Bench via: bench init ${BENCH_DIR}/"
 bench init "${BENCH_DIR}/"
 
-# ── Post-init guidance ──────────────────────────────────────────────────────
+# ── Post-init guidance ───────────────────────────
 cat <<EOF
 
 [OK] Bench bootstrapped at ${BENCH_DIR}/
@@ -94,6 +108,7 @@ Next steps:
   4. bench --site <site-name> install-app <app-name>  # always use --site
 
 Reminders:
+  - Infrastructure (MariaDB, Redis) must be running: docker compose up -d
   - This directory is gitignored. Your work here is local-only.
   - Never create DocType folders manually — let Frappe migrations create them.
   - Use bare \`bench\` and always pass \`--site <site>\` for site-scoped commands.
