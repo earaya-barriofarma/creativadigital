@@ -50,6 +50,8 @@ Every functional change **must** include test evidence. For this control-plane w
 - **Documentation**: proof of links resolving, linted markdown
 - **Policy/Governance**: reviewer verification that the change matches the spec
 
+CI runs these gates automatically on every PR and integration-branch push — see the [Quality Gates Runbook](docs/runbooks/quality-gates.md) for the workflow and the manual required-check step.
+
 ### PR Template
 
 All PRs must use the [pull request template](.github/pull_request_template.md), which requires:

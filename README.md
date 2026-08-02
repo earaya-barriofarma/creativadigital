@@ -30,7 +30,7 @@ The following decisions are deferred to later changes:
 |-------|----------------|
 | Frappe major version & supported OS/toolchain | Before first Bench bootstrap |
 | Git host & private-repo policy | Before first client app |
-| CI provider & provider-specific workflow | Before first PR that needs CI |
+| CI provider & provider-specific workflow | **Resolved** — [ADR-003](docs/architecture/ci-provider-adr.md) (GitHub Actions) |
 | API schema, auth, error envelope design | Before first frontend integration |
 | Containers / dev containers | Team consensus on parity needs |
 | Production hosting, deployment, monitoring | Client onboarding |
@@ -39,7 +39,7 @@ The following decisions are deferred to later changes:
 
 | Resource | Description |
 |----------|-------------|
-| [Architecture Decisions](docs/architecture/) | ADR-001: Control-plane topology, ADR-002: Frontend API boundary |
+| [Architecture Decisions](docs/architecture/) | ADR-001: Control-plane topology, ADR-002: Frontend API boundary, ADR-003: CI provider + quality-gate wiring |
 | [Runbooks](docs/runbooks/) | Local Bench lifecycle, quality gates |
 | [Contributing](CONTRIBUTING.md) | Commit policy, PR review budget, test evidence |
 | [Templates](templates/) | Environment stubs and reusable assets |

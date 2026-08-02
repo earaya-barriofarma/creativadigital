@@ -1,0 +1,20 @@
+name: quality-gate
+
+on:
+  pull_request:
+  push:
+    branches: [develop, qa, uat, main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Workspace checks
+        run: bash ./scripts/check-workspace.sh
+      - uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
+        with:
+          severity: warning
