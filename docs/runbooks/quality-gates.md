@@ -2,7 +2,7 @@
 
 **Audience**: Contributors preparing changes for review.
 
-**Purpose**: Define the local quality gate workflow and document how to hand off checks to a future CI provider.
+**Purpose**: Define the local quality gate workflow and the automated CI gate that runs on every pull request and on pushes to integration branches (see [ADR-003](../architecture/ci-provider-adr.md)).
 
 ---
 
@@ -59,48 +59,63 @@ Include test evidence in the PR body. For this repository's control-plane scope:
 
 ---
 
-## CI Provider Handoff
+## CI Quality Gate (GitHub Actions)
 
-The local gates are designed to run identically in CI. No Frappe provisioning or remote service is required.
+The local gates above now run automatically in CI via [GitHub Actions](https://github.com/features/actions) (see [ADR-003](../architecture/ci-provider-adr.md)). The workflow triggers on every pull request and on every push to `develop`, `qa`, `uat`, or `main`, and reports a single `quality-gate` status check. No Node runner, no secrets, no Frappe provisioning.
 
-### Handoff Checklist
-
-When a CI provider is chosen:
-
-1. **Enable `scripts/check-workspace.sh`** — wire it as a pre-build job step. Zero dependencies beyond bash/find/grep.
-2. **Add Markdown linting** — integrate `markdownlint-cli` or similar for deeper structural checks.
-3. **Enforce Conventional Commits** — add a commit-message lint step (e.g., `commitlint`).
-4. **Add `shellcheck`** — run on all `.sh` files under `scripts/`.
-5. **Configure branch protection** — require checks to pass before merging.
-
-### Provider-Specific Config (placeholder)
+### Workflow
 
 ```yaml
-# Example: GitHub Actions — check-workspace job
-# jobs:
-#   quality-gate:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Workspace checks
-#         run: ./scripts/check-workspace.sh
+name: quality-gate
+
+on:
+  pull_request:
+  push:
+    branches: [develop, qa, uat, main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Workspace checks
+        run: ./scripts/check-workspace.sh
+      - uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
+        with:
+          severity: warning
 ```
 
-> Replace the block above with the actual CI provider configuration when chosen.
+### ShellCheck Authority
 
-### Provider Selection Criteria
+ShellCheck runs **in CI** on the hosted runner via the pinned `ludeeus/action-shellcheck` action. ShellCheck is not installed locally by default; `brew install shellcheck` is optional for local parity but CI remains the authority.
 
-| Criterion | Notes |
-|-----------|-------|
-| Free-tier minutes | Enough for pre-build quality gates |
-| Matrix support | Needed once Frappe multi-version tests are added |
-| Secret management | Required for any Frappe runtime tests later |
-| Private repo support | This repo is private |
+### Merge Blocking (manual, post-first-green)
+
+A red `quality-gate` blocks merges wherever the check is **required** on the target branch. Enabling the required check on `develop` is a one-time manual step, performed **after the first green run**:
+
+1. Repository **Settings → Branches → Add branch protection rule** for `develop`.
+2. Enable **Require status checks to pass before merging** and select the `quality-gate` check.
+
+Do not enable the required check before the first green run, or the branch becomes unmergeable.
+
+### Repo Visibility
+
+This repo is **public** on GitHub (unlimited Actions minutes apply; repository content is world-readable). Making the repo **private** is a GitHub-side owner action (Settings → General → Danger Zone), not automated here — this workflow contains no secrets and is safe to run either way.
+
+### Deferred (future slices)
+
+- **markdownlint / commitlint** — require a Node runner; deferred.
+- **Branch-protection automation** — a repo-settings action cannot live in this PR; the manual step above is the path.
 
 ---
 
 ## References
 
 - [Script: check-workspace.sh](../../scripts/check-workspace.sh)
+- [ADR-003: CI Provider + Quality-Gate Wiring](../architecture/ci-provider-adr.md)
+- [CI workflow: quality-gates.yml](../../.github/workflows/quality-gates.yml)
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) — Commit and PR policy
 - [PR Template](../../.github/pull_request_template.md)
